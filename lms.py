@@ -32,6 +32,7 @@ class LMS(object):
         self.y = N.asarray([])
         self.w_track = N.zeros((delays, 1))
         self.alpha = N.zeros((self.delays,1))
+        self.Xf =  N.zeros((self.delays,1))
 
 
     def fprop(self, X):
@@ -49,38 +50,44 @@ class LMS(object):
         """
         
         X  = N.zeros((self.delays,1))
-        Xf = N.zeros((self.delays,1))
-
-        for i in range(self.delays):
-            i_sample = sample - i
-            if i_sample>=0:
-                X[i]  = self.dataset[i_sample]
-                Xf[i] = (1-self.mu)*self.prev_x + self.mu*X[i]
-                #self.dataset[i_sample]
-                self.prev_x = Xf[i]
+        # TODO: Make the Gamma Filter work and delete this
+        if self.learning_rate_mu==0.: #Just simple working solution for the regular delays
+            for i in range(self.delays):
+                i_sample = sample - i
+                if i_sample>=0:
+                    self.Xf[i] = self.dataset[i_sample]
+                else:
+                    self.Xf[i] = 0
+        else:
+            assert self.delays == 2
+            if sample-1 >= 0:
+                self.Xf[1] = (1-self.mu)*self.Xf[0] + self.mu*self.dataset[sample-1]
             else:
-                X[i]  = 0.
-                Xf[i] = 0.
+                self.Xf[1] = (1-self.mu)*self.Xf[0]
+            self.Xf[0] = self.dataset[sample]
+
         d = self.desired[sample]
 
-        return Xf, X, d
+        return d
 
     def sgd(self, sample):
+        
+        assert self.Xf.shape[0]==self.delays
 
-        Xf, X, d = self.get_next_X(sample)
-        y = self.fprop(Xf)
+        d = self.get_next_X(sample)
+        y = self.fprop(self.Xf)
         e = d-y
         self.y = N.append(self.y, y)
         self.error = N.append(self.error, e)
 
         self.w_track = N.hstack( [self.w_track, self.w] )
-        self.w = self.w + self.learning_rate*e*Xf#/N.linalg.norm(X)
+        self.w = self.w + self.learning_rate*e*self.Xf/N.linalg.norm(self.Xf)
 
         self.b = self.b + self.learning_rate*e
         
         for i in range(1,self.delays):
             self.alpha[i] = (1-self.mu)*self.alpha[i-1] + \
-            self.mu*self.alpha[i-1] + Xf[i-1] - Xf[i]
+            self.mu*self.alpha[i-1] + self.Xf[i-1] - self.Xf[i]
 
         self.mu = self.mu + self.learning_rate_mu * e * \
                 N.dot(self.alpha.transpose(), self.w)
