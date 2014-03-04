@@ -42,19 +42,14 @@ ax.set_zlim(-0, N.max(J)/2.)
 plt.show()
 plt.savefig('erro_surface_new.png',format='png')
 
+# Adapt filter
 ref = N.squeeze(data['reference'])
 pr  = N.squeeze(data['primary'])
-filtro = lms.LMS(pr, ref, 2, learning_rate=.01,
-         learning_rate_mu=.0)
+filtro = lms.LMS(pr, ref, 3, learning_rate=.01,
+         learning_rate_mu=.001)
 filtro.train_lms()
 
 plt.figure()
-#plt.contour(w1, w2, J, rstride=6, alpha=.8)
-#plt.xlabel('w_1')
-#plt.xlim(-2, 2)
-##plt.xlabel('w_2')
-#plt.ylim(-2, 2)
-#plt.plot(filtro.w_track[0], filtro.w_track[1])
 plt.plot(filtro.w_track.transpose())
 plt.show()
 plt.savefig('weight_track.png',format='png')
@@ -73,3 +68,6 @@ plt.plot(MSE)
 plt.xlim(0,100)
 plt.show()
 plt.savefig('learning_curve.eps',format='eps')
+
+SNR = -10*log10( N.var(filtro.error) / N.var( ref )  )
+print SNR

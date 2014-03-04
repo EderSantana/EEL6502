@@ -59,11 +59,13 @@ class LMS(object):
                 else:
                     self.Xf[i] = 0
         else:
-            assert self.delays == 2
-            if sample-1 >= 0:
-                self.Xf[1] = (1-self.mu)*self.Xf[0] + self.mu*self.dataset[sample-1]
+            assert self.delays == 3
+            if sample-2 >= 0:
+                self.Xf[2] = (1-self.mu)*self.Xf[2] + self.mu*(1-self.mu)*self.Xf[1] + self.mu**2 * self.dataset[sample-2]
+                self.Xf[1] = (1-self.mu)*self.Xf[1] + self.mu*self.dataset[sample-1]
             else:
-                self.Xf[1] = (1-self.mu)*self.Xf[0]
+                self.Xf[2] = (1-self.mu)*self.Xf[2]
+                self.Xf[1] = (1-self.mu)*self.Xf[1]
             self.Xf[0] = self.dataset[sample]
 
         d = self.desired[sample]
@@ -98,7 +100,7 @@ class LMS(object):
     def train_lms(self):
         for i in range(len(self.dataset)):
             if N.mod(i,1000)==0:
-                print i
+                #print i
                 gc.collect()
             self.sgd(i)
 
