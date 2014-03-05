@@ -7,6 +7,7 @@ from mpl_toolkits.mplot3d import axes3d
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import lms
+import cPickle
 
 data = loadmat('project1.mat')
 ref = N.squeeze(data['reference'])
@@ -18,19 +19,21 @@ best_lr = 0.
 best_order = 0.
 
 lrates = N.linspace(.0001,.01,10)
-orders = N.arange(2,50)
+orders = N.arange(2,30,3)
 SNR = N.zeros((lrates.shape[0], orders.shape[0]))
-for i in lrates:
+for i in range(lrates.shape[0]):
     print i
-    for j in orders:
+    for j in range(orders.shape[0]):
         f = lms.LMS(pr, ref, j, learning_rate=i)
         f.train_lms()
-        SNR[i,j] = -10*N.log10( N.var(filtro.error) / N.var( ref )  )
-        if SNR(i,j) == N.max(SNR):
-            best_w_track = f.weight_track.transpose()
+        SNR[i,j] = -10*N.log10( N.var(f.error) / N.var( ref )  )
+        if SNR[i,j] == N.max(SNR):
+            best_w_track = f.w_track.transpose()
             best_out = f.error
             best_lr = i
             best_order = j
+
+cPickle.dump(SNR, open('SNR.pkl','w'), -1)
 
 # Plot SNR Grid
 plt.imshow(SNR)

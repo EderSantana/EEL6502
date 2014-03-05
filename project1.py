@@ -45,7 +45,7 @@ plt.savefig('erro_surface_new.png',format='png')
 # Adapt filter
 ref = N.squeeze(data['reference'])
 pr  = N.squeeze(data['primary'])
-filtro = lms.LMS(pr, ref, 3, learning_rate=.01,
+filtro = lms.LMS(pr, ref, 5, learning_rate=.01,
          learning_rate_mu=.001)
 filtro.train_lms()
 
@@ -69,5 +69,5 @@ plt.xlim(0,100)
 plt.show()
 plt.savefig('learning_curve.eps',format='eps')
 
-SNR = -10*log10( N.var(filtro.error) / N.var( ref )  )
+SNR = -10*N.log10( N.var(filtro.error) / N.var( ref )  )
 print SNR

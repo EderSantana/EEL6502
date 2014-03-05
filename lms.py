@@ -59,13 +59,19 @@ class LMS(object):
                 else:
                     self.Xf[i] = 0
         else:
-            assert self.delays == 3
-            if sample-2 >= 0:
-                self.Xf[2] = (1-self.mu)*self.Xf[2] + self.mu*(1-self.mu)*self.Xf[1] + self.mu**2 * self.dataset[sample-2]
-                self.Xf[1] = (1-self.mu)*self.Xf[1] + self.mu*self.dataset[sample-1]
-            else:
-                self.Xf[2] = (1-self.mu)*self.Xf[2]
-                self.Xf[1] = (1-self.mu)*self.Xf[1]
+            for i in range(self.delays-1,0,-1):
+                if sample-i>=0:
+                    self.Xf[i] = (1-self.mu)*self.Xf[i]
+                    for j in range(1,i):
+                        self.Xf[i] = self.Xf[i] + (1-self.mu)*(self.mu**(i-j))*self.Xf[j]
+                    self.Xf[i] = self.Xf[i] + self.dataset[sample-i]
+
+            #assert self.delays == 3
+            #if sample-2 >= 0:
+            #    self.Xf[2] = (1-self.mu)*self.Xf[2] + self.mu*(1-self.mu)*self.Xf[1] + self.mu**2 * self.dataset[sample-2]
+            #    self.Xf[1] = (1-self.mu)*self.Xf[1] + self.mu*self.dataset[sample-1]
+                else:
+                    self.Xf[i] = (1-self.mu)*self.Xf[i]
             self.Xf[0] = self.dataset[sample]
 
         d = self.desired[sample]
@@ -94,8 +100,12 @@ class LMS(object):
         self.mu = self.mu + self.learning_rate_mu * e * \
                 N.dot(self.alpha.transpose(), self.w)
         
-        if self.mu > 2 or self.mu<0:
-            self.mu = N.mod(self.mu, 2)
+        #if self.mu > 2 or self.mu<0:
+        #    self.mu = N.mod(self.mu, 2)
+        if self.mu > 2:
+            self.mu = 2.
+        if self.mu < 0:
+            self.mu = 0.
 
     def train_lms(self):
         for i in range(len(self.dataset)):
