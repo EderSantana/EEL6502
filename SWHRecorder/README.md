@@ -1,4 +1,7 @@
 Noise cancelletion demo.
+
+Run: python realTimeAudio.py
+
 This code is basically Scott W. Harden's code [1] with some mods for 440Hz tone cancellation.
 
 You can generate the tone on the following web site: http://9gag.tv/v/3735
