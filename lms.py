@@ -29,7 +29,7 @@ class LMS(object):
 
         self.prev_x = 0.
         self.error = N.asarray([])
-        self.y = N.asarray([])
+        self.y = N.zeros_like(desired)
         self.w_track = N.zeros((delays, 1))
         self.alpha = N.zeros((self.delays,1))
         self.Xf =  N.zeros((self.delays,1))
@@ -109,8 +109,8 @@ class LMS(object):
 
     def train_lms(self):
         for i in range(len(self.dataset)):
-            if N.mod(i,1000)==0:
+            #if N.mod(i,1000)==0:
                 #print i
-                gc.collect()
+                #gc.collect()
             self.sgd(i)
 

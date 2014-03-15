@@ -45,8 +45,8 @@ plt.savefig('erro_surface_new.png',format='png')
 # Adapt filter
 ref = N.squeeze(data['reference'])
 pr  = N.squeeze(data['primary'])
-filtro = lms.LMS(pr, ref, 5, learning_rate=.01,
-         learning_rate_mu=.001)
+filtro = lms.LMS(pr, ref,11, learning_rate=.01,
+         learning_rate_mu=.0001)
 filtro.train_lms()
 
 plt.figure()
@@ -69,5 +69,13 @@ plt.xlim(0,100)
 plt.show()
 plt.savefig('learning_curve.eps',format='eps')
 
-SNR = -10*N.log10( N.var(filtro.error) / N.var( ref )  )
+SNR = 10*N.log10( N.var(filtro.error) / N.var( pr*((filtro.error*pr)**2).sum()/(pr**2).sum() )  )
 print SNR
+
+# Save transfer func
+tt = N.linspace(-.5*16000.,.5*16000.,70000)
+E = N.fft.fft(filtro.error)
+R = N.fft.fft(ref)
+plt.plot(tt,N.abs(E)/N.abs(R))
+plt.xlabel('Frequency (Hz)')
+plt.savefig('transfer_func_2.eps', format='eps')

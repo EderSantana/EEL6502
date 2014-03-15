@@ -18,26 +18,33 @@ best_out = N.zeros_like(ref)
 best_lr = 0.
 best_order = 0.
 
-lrates = N.linspace(.0001,.01,10)
-orders = N.arange(2,30,3)
+lrates = N.linspace(.0001,.01,5)
+orders = N.arange(2,20,3)
 SNR = N.zeros((lrates.shape[0], orders.shape[0]))
+noSNR = N.zeros_like(SNR)
 for i in range(lrates.shape[0]):
     print i
     for j in range(orders.shape[0]):
-        f = lms.LMS(pr, ref, j, learning_rate=i)
+        f = lms.LMS(pr, ref, orders[j], learning_rate=lrates[i])
         f.train_lms()
-        SNR[i,j] = -10*N.log10( N.var(f.error) / N.var( ref )  )
+        SNR[i,j] = 10*N.log10( N.var(f.error) / N.var( pr*((f.error*pr)**2).sum()/(pr**2).sum() ) )
+        #noSNR[i,j] = N.correlate(f.error, pr-pr.mean())
         if SNR[i,j] == N.max(SNR):
             best_w_track = f.w_track.transpose()
             best_out = f.error
-            best_lr = i
-            best_order = j
+            best_lr = lrates[i]
+            best_order = orders[j]
 
 cPickle.dump(SNR, open('SNR.pkl','w'), -1)
 
 # Plot SNR Grid
+plt.figure()
 plt.imshow(SNR)
-plt.savefig('SNR_gird.eps',format='eps')
+#plt.xticks(orders)
+#plt.yticks(lrates)
+plt.ylabel('learning rate $\eta$ = ' + str(lrates))
+plt.xlabel('filter order M = ' + str(orders))
+plt.savefig('SNR_grid.eps',format='eps')
 
 # Plot Best filter
 plt.figure()
@@ -45,10 +52,19 @@ plt.plot(best_out)
 plt.show()
 plt.savefig('best_output_signal.eps',format='eps')
 
+# Plot Best Transfer Function
+E = N.abs( N.fft.fft(best_out) )
+R = N.abs( N.fft.fft(ref) )
+tt = N.linspace(-.5*16000.,.5*16000.,70000)
+plt.figure()
+plt.plot(tt, E/R)
+plt.show()
+plt.savefig('best_transfer_func.eps',format='eps')
+
 ## Learning curve
 plt.figure()
 normalizer = N.cumsum(range(1,best_out.shape[0]+1))
-MSE = N.cumsum(best_error**2)/normalizer
+MSE = N.cumsum(best_out**2)/normalizer
 plt.plot(MSE)
 plt.xlim(0,100)
 plt.show()
